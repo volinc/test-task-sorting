@@ -6,6 +6,7 @@ namespace LargeFileGenerator;
 public sealed class LineGenerator : IDisposable, ILineGenerator
 {
     // Can be extracted into configuration
+    private const int TextMinLength = 5;
     private const int TextMaxLength = 100;
     private const string AllowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     
@@ -14,7 +15,7 @@ public sealed class LineGenerator : IDisposable, ILineGenerator
     public Line Generate()
     {
         var number = Random.Shared.NextInt64();
-        var textLength = Random.Shared.Next(TextMaxLength);
+        var textLength = Random.Shared.Next(TextMinLength, TextMaxLength);
         var text = GenerateRandomText(textLength);
         return new Line(number, text);
     }
