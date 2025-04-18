@@ -98,14 +98,14 @@ public static class FileSorter
         // Use buffer for slightly better performance reading large files
         using var reader = new StreamReader(inputFile, new FileStreamOptions { BufferSize = 65536 }); // 64k buffer
 
-        string? line;
-        while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+        string? lineRawValue;
+        while ((lineRawValue = await reader.ReadLineAsync(cancellationToken)) != null)
         {
-            if (Line.TryParse(line, out var entry))
+            if (Line.TryParse(lineRawValue, out var line))
             {
-                currentChunk.Add(entry);
+                currentChunk.Add(line);
                 // Estimate size (avoids precise encoding checks for performance)
-                currentChunkSize += line.Length * sizeof(char) + IntPtr.Size; // Rough estimate including object overhead
+                currentChunkSize += lineRawValue.Length * sizeof(char) + IntPtr.Size; // Rough estimate including object overhead
             }
             
             if (currentChunkSize >= maxChunkSizeInBytes)
@@ -151,10 +151,10 @@ public static class FileSorter
         // Use buffer for slightly better write performance
         await using (var writer = new StreamWriter(tempFileName, false, System.Text.Encoding.UTF8, 65536)) // 64k buffer
         {
-            foreach (var entry in chunk)
+            foreach (var line in chunk)
             {
                 // Write the original line back to preserve formatting
-                await writer.WriteLineAsync(entry.RowValue.AsMemory(), cancellationToken);
+                await writer.WriteLineAsync(line.RawValue.AsMemory(), cancellationToken);
             }
         }
         tempFiles.Add(tempFileName);
@@ -176,12 +176,12 @@ public static class FileSorter
                 if (cancellationToken.IsCancellationRequested) return;
                 var reader = new StreamReader(tempFile, new FileStreamOptions { BufferSize = 65536 });
                 readers.Add(reader);
-                string? firstLine = await reader.ReadLineAsync(cancellationToken);
-                if (firstLine != null && Line.TryParse(firstLine, out var entry))
+                var firstLineRawValue = await reader.ReadLineAsync(cancellationToken);
+                if (firstLineRawValue != null && Line.TryParse(firstLineRawValue, out var line))
                 {
-                    priorityQueue.Enqueue(new MergeState(reader, entry), entry);
+                    priorityQueue.Enqueue(new MergeState(reader, line), line);
                 }
-                else if (firstLine == null)
+                else if (firstLineRawValue == null)
                 {
                     // Empty chunk file? Close reader immediately.
                     reader.Dispose();
@@ -198,7 +198,7 @@ public static class FileSorter
             {
                 if (cancellationToken.IsCancellationRequested) return;
                 // Write the smallest line (from the dequeued state) to the output
-                await writer.WriteLineAsync(state.CurrentLine.RowValue.AsMemory(), cancellationToken);
+                await writer.WriteLineAsync(state.CurrentLine.RawValue.AsMemory(), cancellationToken);
 
                 // Read the next line from the *same* reader
                 string? nextLine = await state.Reader.ReadLineAsync(cancellationToken);

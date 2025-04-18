@@ -2,22 +2,22 @@ namespace LargeFileShared;
 
 public readonly struct Line : IComparable<Line>, IEquatable<Line>
 {
-    public Line(long number, string text) : this(number, text, FormatAsRowValue(number, text))
+    public Line(long number, string text) : this(number, text, FormatAsRawValue(number, text))
     {
     }
 
-    private static string FormatAsRowValue(long number, string text) => $"{number}. {text}";
+    private static string FormatAsRawValue(long number, string text) => $"{number}. {text}";
     
-    private Line(long number, string text, string rowValue)
+    private Line(long number, string text, string rawValue)
     {
         Number = number;
         Text = text;
-        RowValue = rowValue;
+        RawValue = rawValue;
     }
     
     public long Number { get; }
     public string Text { get; }
-    public string RowValue { get; }
+    public string RawValue { get; }
     
     public static bool TryParse(string? value, out Line result)
     {
@@ -58,7 +58,7 @@ public readonly struct Line : IComparable<Line>, IEquatable<Line>
         return CompareTo(other) == 0;
     }
     
-    public override string ToString() => RowValue;
+    public override string ToString() => RawValue;
     public override bool Equals(object? obj) => obj is Line other && CompareTo(other) == 0;
     public override int GetHashCode() => HashCode.Combine(Text, Number);
     

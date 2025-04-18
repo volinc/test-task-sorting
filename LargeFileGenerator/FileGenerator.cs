@@ -19,7 +19,7 @@ public sealed class FileGenerator : IFileGenerator
 
     public async Task GenerateAsync()
     {
-        Console.WriteLine($"Starting generation of file: {_settings.FilePath}");
+        Console.WriteLine($"Starting generation of file: {_settings.OutputFile}");
         Console.WriteLine($"Target size: {_settings.TargetSizeBytes:N0} bytes.");
         Console.WriteLine($"Using {Environment.ProcessorCount} producer threads.");
         Console.WriteLine($"Generating batches of {_settings.LinesPerBatch:N0} lines.");
@@ -34,7 +34,7 @@ public sealed class FileGenerator : IFileGenerator
             SingleWriter = false
         });
 
-        var consumerTask = ConsumeAndWriteAsync(channel.Reader, _settings.FilePath, _settings.TargetSizeBytes, cts);
+        var consumerTask = ConsumeAndWriteAsync(channel.Reader, _settings.OutputFile, _settings.TargetSizeBytes, cts);
         
         var producerTasks = new List<Task>();
         var producerCount = Environment.ProcessorCount;
@@ -59,7 +59,7 @@ public sealed class FileGenerator : IFileGenerator
 
         try
         {
-            var fileInfo = new FileInfo(_settings.FilePath);
+            var fileInfo = new FileInfo(_settings.OutputFile);
             Console.WriteLine(fileInfo.Exists
                 ? $"Actual file size: {fileInfo.Length:N0} bytes ({(double) fileInfo.Length / (1024 * 1024 * 1024):F2} GB)"
                 : "File was not created or writing failed early.");
@@ -86,7 +86,7 @@ public sealed class FileGenerator : IFileGenerator
                         break;
 
                     batch[count] = _settings.ShouldUseExistingLine(count, out var lineIndex)
-                        ? batch[lineIndex]
+                        ? _lineGenerator.Generate(batch[lineIndex])
                         : _lineGenerator.Generate();
                     
                     count++;
@@ -151,7 +151,7 @@ public sealed class FileGenerator : IFileGenerator
             {
                 foreach (var line in batch)
                 {
-                    await writer.WriteLineAsync(line.RowValue.AsMemory(), cts.Token); // Use WriteLineAsync with ReadOnlyMemory<char>
+                    await writer.WriteLineAsync(line.RawValue.AsMemory(), cts.Token); // Use WriteLineAsync with ReadOnlyMemory<char>
                 }
 
                 // Check file size periodically

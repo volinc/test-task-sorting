@@ -22,7 +22,7 @@ public class LineTests
         Assert.True(result);
         Assert.Equal(expectedNumber, entry.Number);
         Assert.Equal(expectedText, entry.Text);
-        Assert.Equal(line, entry.RowValue); // Ensure original line is preserved
+        Assert.Equal(line, entry.RawValue); // Ensure original line is preserved
     }
 
     [Theory]
