@@ -18,7 +18,8 @@ public class FileSorterTestFixture : IDisposable
     {
         try
         {
-            if (Directory.Exists(TestRootDir)) Directory.Delete(TestRootDir, true);
+            if (Directory.Exists(TestRootDir)) 
+                Directory.Delete(TestRootDir, true);
         }
         catch (Exception ex)
         {

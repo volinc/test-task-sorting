@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace LargeFileSorter.Tests;
 
-public class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestFixture>
+public sealed class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestFixture>
 {
     private readonly FileSorterChunkingPhase _chunkingPhase;
     private readonly FileSorterTestFixture _fixture;
@@ -28,7 +28,8 @@ public class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestFixture>
         Assert.False(Directory.Exists(_fixture.TempDir),
             "Temp directory should ideally not be created if no chunks are made"); // SUT creates it though
         // Let's check if it's empty if created
-        if (Directory.Exists(_fixture.TempDir)) Assert.Empty(Directory.EnumerateFileSystemEntries(_fixture.TempDir));
+        if (Directory.Exists(_fixture.TempDir)) 
+            Assert.Empty(Directory.EnumerateFileSystemEntries(_fixture.TempDir));
     }
 
     [Fact]

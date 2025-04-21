@@ -2,7 +2,7 @@ using System.Text;
 
 namespace LargeFileSorter.Tests;
 
-public class FileSorterExternalMergePhaseTests : IClassFixture<FileSorterTestFixture>
+public sealed class FileSorterExternalMergePhaseTests : IClassFixture<FileSorterTestFixture>
 {
     private readonly FileSorterTestFixture _fixture;
     private readonly FileSorterExternalMergePhase _mergePhase;

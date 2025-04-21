@@ -7,7 +7,7 @@ namespace LargeFileSorter.Tests;
 // Testing the direct File/Directory/Console interactions and the static
 // CleanupTempFiles requires integration tests or refactoring FileSorter
 // to inject abstractions for IO and Logging.
-public class FileSorterTests
+public sealed class FileSorterTests
 {
     private const string ValidInputFile = "input.txt";
     private const string ValidOutputFile = "output.txt";
