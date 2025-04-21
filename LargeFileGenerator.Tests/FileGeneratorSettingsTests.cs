@@ -6,8 +6,8 @@ public class FileGeneratorSettingsTests
     public void DefaultSettingsAreCorrect()
     {
         var settings = new FileGeneratorSettings();
-        Assert.Equal("large_file.txt", settings.OutputFile);
-        Assert.Equal(10L * 1024 * 1024 * 1024, settings.TargetSizeBytes);
+        Assert.Equal("large_file.txt", settings.OutputFilePath);
+        Assert.Equal(10L * 1024 * 1024, settings.TargetSizeBytes);
         Assert.Equal(10_000, settings.LinesPerBatch);
         Assert.Equal(100, settings.ChannelCapacity);
         Assert.NotNull(settings.ShouldUseExistingLine);
@@ -18,7 +18,7 @@ public class FileGeneratorSettingsTests
     {
         var settings = new FileGeneratorSettings
         {
-            OutputFile = "test.txt",
+            OutputFilePath = "test.txt",
             TargetSizeBytes = 1024,
             LinesPerBatch = 500,
             ChannelCapacity = 50,
@@ -28,7 +28,7 @@ public class FileGeneratorSettingsTests
                 return false;
             }
         };
-        Assert.Equal("test.txt", settings.OutputFile);
+        Assert.Equal("test.txt", settings.OutputFilePath);
         Assert.Equal(1024, settings.TargetSizeBytes);
         Assert.Equal(500, settings.LinesPerBatch);
         Assert.Equal(50, settings.ChannelCapacity);

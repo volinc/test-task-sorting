@@ -11,7 +11,7 @@ public sealed class LineGenerator : IDisposable, ILineGenerator
 
     public LineGenerator(LineGeneratorSettings settings)
     {
-        _settings = settings;
+        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
     
     public Line Generate()
