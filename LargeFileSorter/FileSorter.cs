@@ -18,23 +18,23 @@ public sealed class FileSorter
     }
     
     public async Task SortAsync(
-        string inputFile,
-        string outputFile,
+        string inputFilePath,
+        string outputFilePath,
         string tempDirectory,
         long maxChunkSizeInBytes = DefaultMaxChunkSizeInBytes,
         CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(inputFile))
-            throw new FileNotFoundException("Input file not found.", inputFile);
-        if (string.IsNullOrWhiteSpace(outputFile))
-            throw new ArgumentException("Output file path cannot be empty.", nameof(outputFile));
+        if (!File.Exists(inputFilePath))
+            throw new FileNotFoundException("Input file not found.", inputFilePath);
+        if (string.IsNullOrWhiteSpace(outputFilePath))
+            throw new ArgumentException("Output file path cannot be empty.", nameof(outputFilePath));
         if (string.IsNullOrWhiteSpace(tempDirectory))
             throw new ArgumentException("Temporary directory path cannot be empty.", nameof(tempDirectory));
 
         Directory.CreateDirectory(tempDirectory); // Create a temporary directory if it does not exist
 
         var stopwatch = Stopwatch.StartNew();
-        await Console.Out.WriteLineAsync($"Starting sort for '{inputFile}'...");
+        await Console.Out.WriteLineAsync($"Starting sort for '{inputFilePath}'...");
         await Console.Out.WriteLineAsync($"Using temp directory: '{tempDirectory}'");
         await Console.Out.WriteLineAsync($"Max chunk size: {maxChunkSizeInBytes / (1024 * 1024)} MB");
 
@@ -42,7 +42,7 @@ public sealed class FileSorter
         {
             // Phase 1: Create sorted chunks
             await Console.Out.WriteLineAsync("Phase 1: Creating sorted chunks...");
-            var tempFiles = await _chunkingPhase.CreateSortedChunksAsync(inputFile, tempDirectory, maxChunkSizeInBytes, cancellationToken);
+            var tempFiles = await _chunkingPhase.CreateSortedChunksAsync(inputFilePath, tempDirectory, maxChunkSizeInBytes, cancellationToken);
             await Console.Out.WriteLineAsync($"Phase 1 completed in {stopwatch.Elapsed}. Created {tempFiles.Count} chunk files.");
 
             if (cancellationToken.IsCancellationRequested) 
@@ -53,26 +53,26 @@ public sealed class FileSorter
             {
                 await Console.Out.WriteLineAsync("Phase 2: Merging sorted chunks...");
                 stopwatch.Restart();
-                await _externalMergePhase.MergeSortedChunksAsync(tempFiles, outputFile, cancellationToken);
+                await _externalMergePhase.MergeSortedChunksAsync(tempFiles, outputFilePath, cancellationToken);
                 await Console.Out.WriteLineAsync($"Phase 2 completed in {stopwatch.Elapsed}.");
             }
             else
             {
                 // Handle empty input file case
-                await File.WriteAllTextAsync(outputFile, string.Empty, cancellationToken);
+                await File.WriteAllTextAsync(outputFilePath, string.Empty, cancellationToken);
                 await Console.Out.WriteLineAsync("Input file was empty or contained no valid lines. Created empty output file.");
             }
 
-            await Console.Out.WriteLineAsync($"Successfully sorted '{inputFile}' to '{outputFile}'.");
+            await Console.Out.WriteLineAsync($"Successfully sorted '{inputFilePath}' to '{outputFilePath}'.");
         }
         catch (OperationCanceledException)
         {
             await Console.Out.WriteLineAsync("Sort operation cancelled.");
-            if (File.Exists(outputFile))
+            if (File.Exists(outputFilePath))
             {
                 try
                 {
-                    File.Delete(outputFile);
+                    File.Delete(outputFilePath);
                 }
                 catch
                 {

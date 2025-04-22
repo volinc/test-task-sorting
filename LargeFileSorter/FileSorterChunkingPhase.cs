@@ -4,7 +4,7 @@ namespace LargeFileSorter;
 
 public sealed class FileSorterChunkingPhase : IFileSorterChunkingPhase
 {
-    public async Task<List<string>> CreateSortedChunksAsync(string inputFile, string tempDirectory,
+    public async Task<List<string>> CreateSortedChunksAsync(string inputFilePath, string tempDirectory,
         long maxChunkSizeInBytes, CancellationToken cancellationToken)
     {
         var tempFiles = new List<string>();
@@ -13,7 +13,7 @@ public sealed class FileSorterChunkingPhase : IFileSorterChunkingPhase
         var chunkIndex = 0;
 
         // Use buffer for slightly better performance reading large files
-        using var reader = new StreamReader(inputFile, new FileStreamOptions {BufferSize = 65536}); // 64k buffer
+        using var reader = new StreamReader(inputFilePath, new FileStreamOptions {BufferSize = 65536}); // 64k buffer
 
         string? lineRawValue;
         while ((lineRawValue = await reader.ReadLineAsync(cancellationToken)) != null)

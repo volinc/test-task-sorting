@@ -206,7 +206,7 @@ public sealed class FileSorterTests
                 It.IsAny<long>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(["file.tmp"]); // Return some files
 
-        cts.Cancel(); // Cancel the token *before* calling SortAsync
+        await cts.CancelAsync(); // Cancel the token *before* calling SortAsync
 
         await _sut.SortAsync(ValidInputFile, ValidOutputFile, ValidTempDir, FileSorter.DefaultMaxChunkSizeInBytes,
             cts.Token);

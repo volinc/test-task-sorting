@@ -17,11 +17,11 @@ public sealed class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestF
     public async Task CreateSortedChunksAsync_EmptyInput_ReturnsEmptyList()
     {
         // Arrange
-        var inputFile = _fixture.CreateInputFile("empty.txt", "");
-
+        var inputFilePath = _fixture.CreateInputFile("empty.txt", "");
+        
         // Act
         var tempFiles =
-            await _chunkingPhase.CreateSortedChunksAsync(inputFile, _fixture.TempDir, 1024, CancellationToken.None);
+            await _chunkingPhase.CreateSortedChunksAsync(inputFilePath, _fixture.TempDir, 1024, CancellationToken.None);
 
         // Assert
         Assert.Empty(tempFiles);
@@ -36,13 +36,14 @@ public sealed class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestF
     public async Task CreateSortedChunksAsync_SingleChunk_CreatesOneSortedFile()
     {
         // Arrange
-        var inputFile = _fixture.CreateInputFile("single_chunk.txt", "10. Zebra\n5. Apple\n15. Manatee");
+        var inputFilePath = _fixture.CreateInputFile("single_chunk.txt", "10. Zebra\n5. Apple\n15. Manatee");
         const string expectedContent = "5. Apple\n15. Manatee\n10. Zebra\n"; // Sorted order
         const long smallChunkSize = 10 * 1024 * 1024; // Ensure it fits in one chunk
-
+        Directory.CreateDirectory(_fixture.TempDir);
+        
         // Act
         var tempFiles =
-            await _chunkingPhase.CreateSortedChunksAsync(inputFile, _fixture.TempDir, smallChunkSize,
+            await _chunkingPhase.CreateSortedChunksAsync(inputFilePath, _fixture.TempDir, smallChunkSize,
                 CancellationToken.None);
 
         // Assert
@@ -64,17 +65,18 @@ public sealed class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestF
         const string line2 = "5. Apple"; // ~9 chars * 2 + 8 = 26 bytes
         const string line3 = "15. Manatee"; // ~12 chars * 2 + 8 = 32 bytes
         const string line4 = "1. Ant"; // ~7 chars * 2 + 8 = 22 bytes
-        var inputFile = _fixture.CreateInputFile("multi_chunk.txt", $"{line1}\n{line2}\n{line3}\n{line4}");
+        var inputFilePath = _fixture.CreateInputFile("multi_chunk.txt", $"{line1}\n{line2}\n{line3}\n{line4}");
 
         // Estimated sizes: l1+l2 = 54, l3+l4 = 54. Let chunk size be 60 bytes.
-        const long tinyChunkSize = 60;
+        const long tinyChunkSize = 50;
 
         const string expectedChunk0Content = "5. Apple\n10. Zebra\n"; // Sorted line2, line1
         const string expectedChunk1Content = "1. Ant\n15. Manatee\n"; // Sorted line4, line3
-
+        Directory.CreateDirectory(_fixture.TempDir);
+        
         // Act
         var tempFiles =
-            await _chunkingPhase.CreateSortedChunksAsync(inputFile, _fixture.TempDir, tinyChunkSize,
+            await _chunkingPhase.CreateSortedChunksAsync(inputFilePath, _fixture.TempDir, tinyChunkSize,
                 CancellationToken.None);
 
         // Assert
@@ -96,14 +98,15 @@ public sealed class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestF
     public async Task CreateSortedChunksAsync_InvalidLines_SkipsInvalidAndSortsValid()
     {
         // Arrange
-        var inputFile =
+        var inputFilePath =
             _fixture.CreateInputFile("mixed_lines.txt", "10. Zebra\nINVALID\n5. Apple\nWRONG FORMAT\n15. Manatee");
         const string expectedContent = "5. Apple\n15. Manatee\n10. Zebra\n"; // Sorted order of valid lines
         const long smallChunkSize = 10 * 1024 * 1024;
-
+        Directory.CreateDirectory(_fixture.TempDir);
+        
         // Act
         var tempFiles =
-            await _chunkingPhase.CreateSortedChunksAsync(inputFile, _fixture.TempDir, smallChunkSize,
+            await _chunkingPhase.CreateSortedChunksAsync(inputFilePath, _fixture.TempDir, smallChunkSize,
                 CancellationToken.None);
 
         // Assert
@@ -121,19 +124,18 @@ public sealed class FileSorterChunkingPhaseTests : IClassFixture<FileSorterTestF
         // Arrange
         var line1 = string.Join("\n",
             Enumerable.Range(1, 50).Select(i => $"{i}. Line {i}")); // Enough lines for multiple chunks likely
-        var inputFile = _fixture.CreateInputFile("cancellable.txt", line1);
+        var inputFilePath = _fixture.CreateInputFile("cancellable.txt", line1);
         const long tinyChunkSize = 60; // Force multiple chunks quickly
+        Directory.CreateDirectory(_fixture.TempDir);
         var cts = new CancellationTokenSource();
 
         // Act
-        // Run the task but cancel it shortly after it starts
-        Task<List<string>>? sortTask = null;
         try
         {
-            sortTask = _chunkingPhase.CreateSortedChunksAsync(inputFile, _fixture.TempDir, tinyChunkSize, cts.Token);
+            var sortTask = _chunkingPhase.CreateSortedChunksAsync(inputFilePath, _fixture.TempDir, tinyChunkSize, cts.Token);
             // Give it a moment to start processing, then cancel
-            await Task.Delay(50, CancellationToken.None); // Small delay, adjust if needed
-            cts.Cancel();
+            await Task.Delay(100, CancellationToken.None); // Small delay, adjust if needed
+            await cts.CancelAsync();
             await sortTask; // Await the task to observe cancellation (it might complete partially or throw)
         }
         catch (OperationCanceledException)

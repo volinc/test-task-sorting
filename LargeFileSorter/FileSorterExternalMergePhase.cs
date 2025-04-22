@@ -4,18 +4,20 @@ namespace LargeFileSorter;
 
 public sealed class FileSorterExternalMergePhase : IFileSorterExternalMergePhase
 {
-    public async Task MergeSortedChunksAsync(List<string> tempFiles, string outputFilePath, 
+    public async Task MergeSortedChunksAsync(List<string> tempFilePaths, string outputFilePath, 
         CancellationToken cancellationToken)
     {   
-        var readers = new List<StreamReader>(tempFiles.Count);
-        var priorityQueue = new PriorityQueue<MergeState, Line>(tempFiles.Count); // Min-heap based on Line comparison
+        var readers = new List<StreamReader>(tempFilePaths.Count);
+        var priorityQueue = new PriorityQueue<MergeState, Line>(tempFilePaths.Count); // Min-heap based on Line comparison
 
         try
         {
             // Open all temp files and read the first line from each
-            foreach (var tempFile in tempFiles)
+            foreach (var tempFile in tempFilePaths)
             {
-                if (cancellationToken.IsCancellationRequested) return;
+                if (cancellationToken.IsCancellationRequested) 
+                    return;
+                
                 var reader = new StreamReader(tempFile, new FileStreamOptions { BufferSize = 65536 });
                 readers.Add(reader);
                 var firstLineRawValue = await reader.ReadLineAsync(cancellationToken);
